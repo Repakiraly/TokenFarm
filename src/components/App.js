@@ -4,6 +4,8 @@ import './App.css'
 import Web3 from 'web3'
 import DaiToken from '../abis/DaiToken.json'
 import DappToken from '../abis/DappToken.json'
+import TokenFarm from '../abis/TokenFarm.json'
+import Main from './Main'
 
 
 
@@ -37,7 +39,7 @@ class App extends Component {
     }
 
     //Load DApp Token
-    const dappTokenData = DaiToken.networks[networkId]
+    const dappTokenData = DappToken.networks[networkId]
     if(dappTokenData) {
       const dappToken = new web3.eth.Contract(DappToken.abi, dappTokenData.address) // creating a web3 version of the smart contract
       this.setState({ dappToken })
@@ -47,6 +49,20 @@ class App extends Component {
     else {
       window.alert("Dapp Token contract is not deployed to the network")
     }
+
+     //Load Token Farm
+    const tokenFarmData = TokenFarm.networks[networkId]
+     if(tokenFarmData) {
+      const tokenFarm = new web3.eth.Contract(TokenFarm.abi, tokenFarmData.address) // creating a web3 version of the smart contract
+      this.setState({ tokenFarm })
+      let stakingBalance = await tokenFarm.methods.stakingBalance(this.state.account).call()
+      this.setState({ stakingBalance: stakingBalance.toString() })
+    }
+    else {
+       window.alert("TokenFarm contract is not deployed to the network")
+    }
+
+    this.setState({ loading: false })
   }
 
   //Load web3
@@ -77,6 +93,19 @@ class App extends Component {
   }
 
   render() {
+    let content
+    if(this.state.loading) {
+      content = <p id="loader" className= "text-center">Loading...</p>
+    } 
+    else {
+      content = <Main 
+      daiTokenBalance={this.state.daiTokenBalance}
+      dappTokenBalance = {this.state.dappTokenBalance}
+      stakingBalance = {this.state.stakingBalance}
+      stakeTokens = {this.stakeTokens}
+      unstakeTokens = {this.unstakeTokens}
+      />
+    }
     return (
       <div>
         <Navbar account={this.state.account} />
@@ -91,8 +120,7 @@ class App extends Component {
                 >
                 </a>
 
-                <h1>{this.state.daiTokenBalance} Dai</h1>
-                <h1>{this.state.daiTokenBalance} Dapp</h1>
+                {content}
 
               </div>
             </main>
